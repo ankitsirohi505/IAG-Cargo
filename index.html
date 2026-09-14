@@ -847,12 +847,10 @@
     hidIds.value = ids;
     hidNames.value = names;
 
-    // First ticked tile becomes the Lead's Intended_Parent_Account__c Lookup.
-    // When Sales converts the Lead → Account, the new Account.ParentId can be set
-    // to this same value so the Phase 2 hierarchy LWC shows the tree correctly.
-    const hidParent = $("#hidIntendedParent");
-    hidParent.name = CONFIG.FIELD_IDS.intended_parent;
-    hidParent.value = checked.length ? checked[0].dataset.id : "";
+    // Note: Web-to-Lead cannot populate Lookup fields, so we don't set a name on
+    // #hidIntendedParent. A record-triggered Flow on Lead insert reads the first
+    // AccountId out of Selected_Account_Ids__c and copies it into the
+    // Intended_Parent_Account__c Lookup — the same result, done server-side.
 
     // Compose receipt
     const ref = "L-" + Date.now().toString(36).slice(-6).toUpperCase();
