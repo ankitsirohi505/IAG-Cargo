@@ -404,6 +404,7 @@
       <input type="hidden" id="hidAddr2">
       <input type="hidden" id="hidSelectedIds">
       <input type="hidden" id="hidSelectedNames">
+      <input type="hidden" id="hidIntendedParent">
 
       <!-- ================ STEP 1 ================ -->
       <section id="step1" class="step on" aria-labelledby="s1-title">
@@ -648,6 +649,10 @@
       address_line_2:    "00Nbm00003N4Tcb",
       selected_ids:      "00Nbm00003N4Tci",
       selected_names:    "00Nbm00003N4Tcj",
+      // Phase 2: parent-in-hierarchy — the offering the prospect wants to sit under.
+      // First tile ticked on Step 2 becomes this Lookup value. On Lead Convert, it
+      // will be copied into Account.ParentId so the Account Hierarchy LWC picks it up.
+      intended_parent:   "00Nbm00003N7IZK",
     },
   };
 
@@ -841,6 +846,13 @@
     hidNames.name = CONFIG.FIELD_IDS.selected_names;
     hidIds.value = ids;
     hidNames.value = names;
+
+    // First ticked tile becomes the Lead's Intended_Parent_Account__c Lookup.
+    // When Sales converts the Lead → Account, the new Account.ParentId can be set
+    // to this same value so the Phase 2 hierarchy LWC shows the tree correctly.
+    const hidParent = $("#hidIntendedParent");
+    hidParent.name = CONFIG.FIELD_IDS.intended_parent;
+    hidParent.value = checked.length ? checked[0].dataset.id : "";
 
     // Compose receipt
     const ref = "L-" + Date.now().toString(36).slice(-6).toUpperCase();
