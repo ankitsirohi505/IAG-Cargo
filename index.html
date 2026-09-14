@@ -662,6 +662,17 @@
 
   let OFFERINGS = [];
   let ACTIVE_REGION = "";
+  // Order in which tiles were ticked. First entry is used as Intended_Parent_Account__c
+  // on the Lead — so users can express "put me under THIS one" by clicking it first.
+  const CLICK_ORDER = [];
+  document.addEventListener("change", (e) => {
+    const cb = e.target;
+    if (!cb.matches?.("#tiles input[type='checkbox']")) return;
+    const id = cb.dataset.id;
+    const idx = CLICK_ORDER.indexOf(id);
+    if (cb.checked && idx === -1) CLICK_ORDER.push(id);
+    else if (!cb.checked && idx !== -1) CLICK_ORDER.splice(idx, 1);
+  });
 
   async function loadOfferings() {
     const tilesEl = $("#tiles");
@@ -795,8 +806,20 @@
     const val = (id) => (document.getElementById(id)?.value || "").trim();
     const nval = (id) => (val(id) || "").replace(/,/g, "");
 
-    // Collect selected offerings
-    const checked = $$("#tiles input:checked");
+    // Collect selected offerings — ordered by CLICK order, not DOM order, so the
+    // first tile the user picked becomes Intended_Parent_Account__c.
+    const checkedById = new Map();
+    $$("#tiles input:checked").forEach(c => checkedById.set(c.dataset.id, c));
+    // Everything still-checked, in click order (skip any removed since click)
+    const orderedChecked = CLICK_ORDER
+      .filter(id => checkedById.has(id))
+      .map(id => checkedById.get(id));
+    // Any tile that got ticked but wasn't tracked (e.g. via Select all) — append at end
+    checkedById.forEach((c, id) => {
+      if (!CLICK_ORDER.includes(id)) orderedChecked.push(c);
+    });
+
+    const checked = orderedChecked;
     const ids   = checked.map(c => c.dataset.id).join(",");
     const names = checked.map(c => c.dataset.name + (c.dataset.type ? " (" + c.dataset.type + ")" : "")).join("\n");
 
