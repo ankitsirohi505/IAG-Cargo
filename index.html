@@ -71,26 +71,72 @@
 
   /* progress row */
   .progress{
-    max-width:720px; margin:40px auto 0;
+    max-width:720px; margin:44px auto 0;
     padding:0 clamp(20px,5vw,40px);
-    display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:18px;
+    display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:20px;
   }
-  .step-tag{
-    display:flex; align-items:baseline; gap:8px;
-    font:500 11px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
-    transition:color 220ms ease;
+  .progress-step{
+    display:flex; align-items:center; gap:12px;
+    min-width:0;
   }
-  .step-tag.active{ color:var(--ink); }
-  .step-tag.done{ color:var(--accent); }
-  .step-tag .num{ color:var(--ink); font-weight:500; }
-  .step-tag.pending .num{ color:var(--muted); }
-  .track{ height:2px; background:var(--line-strong); position:relative; overflow:hidden; }
-  .track::after{
+  .step-circle{
+    width:38px; height:38px; border-radius:50%;
+    background:var(--paper); border:1.5px solid var(--line-strong);
+    color:var(--muted); flex-shrink:0;
+    display:grid; place-items:center;
+    font:600 14px/1 var(--font-body);
+    position:relative;
+    transition:background-color 300ms ease, border-color 300ms ease, color 300ms ease, box-shadow 300ms ease;
+  }
+  .progress-step.active .step-circle{
+    background:var(--accent); border-color:var(--accent); color:#fff;
+    box-shadow:0 0 0 5px color-mix(in oklab, var(--accent) 14%, transparent);
+  }
+  :root[data-theme="dark"] .progress-step.active .step-circle{ color:var(--ground); }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .progress-step.active .step-circle{ color:var(--ground); } }
+  .progress-step.done .step-circle{
+    background:var(--accent); border-color:var(--accent); color:transparent;
+  }
+  .progress-step.done .step-circle::after{
+    content:""; position:absolute;
+    width:12px; height:6px;
+    border-left:2px solid #fff; border-bottom:2px solid #fff;
+    transform:rotate(-45deg) translate(1px,-1px);
+  }
+  :root[data-theme="dark"] .progress-step.done .step-circle::after{ border-color:var(--ground); }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .progress-step.done .step-circle::after{ border-color:var(--ground); } }
+
+  .step-info{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .step-tag-label{
+    font:500 10px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted);
+    transition:color 300ms ease;
+  }
+  .progress-step.active .step-tag-label{ color:var(--accent); }
+  .progress-step.done   .step-tag-label{ color:var(--accent); }
+  .step-tag-title{
+    font:500 14px/1.25 var(--font-body); color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    transition:color 300ms ease;
+  }
+  .progress-step.pending .step-tag-title{ color:var(--muted); }
+
+  .progress-connector{
+    height:2px; background:var(--line-strong); position:relative; overflow:hidden; border-radius:1px;
+    min-width:40px;
+  }
+  .progress-connector::after{
     content:""; position:absolute; inset:0 100% 0 0;
     background:var(--accent);
-    transition:right 320ms cubic-bezier(.4,.14,.2,1);
+    transition:right 400ms cubic-bezier(.4,.14,.2,1);
   }
-  body.on-step-2 .track::after{ right:0; }
+  body.on-step-2 .progress-connector::after{ right:0; }
+
+  @media (max-width:520px){
+    .progress{ gap:12px; }
+    .step-tag-title{ display:none; }
+    .step-tag-label{ font-size:11px; }
+  }
 
   /* main */
   main{ flex:1; display:flex; justify-content:center; padding:44px clamp(20px,5vw,40px) 120px; }
@@ -238,7 +284,21 @@
   .form-nav .nav-side.left{ justify-self:start; }
   .nav-info{
     text-align:center;
-    font:500 11px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .nav-info .dots{ display:flex; gap:6px; }
+  .nav-info .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--line-strong);
+    transition:background-color 300ms ease, transform 300ms ease;
+  }
+  .nav-info .dot.on{ background:var(--accent); transform:scale(1.2); }
+  .nav-info .dot.done{ background:var(--accent); opacity:.55; }
+  .nav-info .info-title{
+    font:500 12px/1 var(--font-body); color:var(--ink);
+  }
+  .nav-info .info-sub{
+    font:500 10px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
   }
   button.btn{
     font:500 14px/1 var(--font-body); padding:12px 22px; border-radius:6px; cursor:pointer;
@@ -301,7 +361,7 @@
   /* footer */
   footer.footprint{
     padding:24px clamp(20px,5vw,40px); border-top:1px solid var(--line);
-    display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    display:flex; justify-content:center; gap:16px; flex-wrap:wrap;
     color:var(--muted); font:500 11px/1.6 var(--font-mono); letter-spacing:.12em; text-transform:uppercase;
   }
   @media (max-width:460px){
@@ -319,13 +379,24 @@
     <div class="brand-mark" aria-hidden="true">AK</div>
     <div class="brand-name">Aerolink Cargo <em>— Trade Credit</em></div>
   </div>
-  <div class="doc-ref">Form · CRD-2026-01</div>
 </header>
 
 <div class="progress" role="group" aria-label="Application progress">
-  <div class="step-tag active" id="tag1"><span class="num">01</span><span>Company details</span></div>
-  <div class="track" aria-hidden="true"></div>
-  <div class="step-tag pending" id="tag2"><span class="num">02</span><span>Account selection</span></div>
+  <div class="progress-step active" id="tag1">
+    <div class="step-circle"><span class="step-num">1</span></div>
+    <div class="step-info">
+      <span class="step-tag-label">Step 1</span>
+      <span class="step-tag-title">Company details</span>
+    </div>
+  </div>
+  <div class="progress-connector" aria-hidden="true"></div>
+  <div class="progress-step pending" id="tag2">
+    <div class="step-circle"><span class="step-num">2</span></div>
+    <div class="step-info">
+      <span class="step-tag-label">Step 2</span>
+      <span class="step-tag-title">Account selection</span>
+    </div>
+  </div>
 </div>
 
 <main>
@@ -525,7 +596,11 @@
         <div class="nav-side left">
           <button type="button" id="backBtn" class="btn ghost" disabled>← Back</button>
         </div>
-        <div class="nav-info" id="navInfo">Step 01 of 02</div>
+        <div class="nav-info" id="navInfo">
+          <div class="dots"><span class="dot on" data-dot="1"></span><span class="dot" data-dot="2"></span></div>
+          <span class="info-title" id="navTitle">Company details</span>
+          <span class="info-sub" id="navSub">Step 1 of 2</span>
+        </div>
         <div class="nav-side right">
           <button type="button" id="nextBtn" class="btn primary">Continue</button>
         </div>
@@ -555,7 +630,6 @@
 
 <footer class="footprint">
   <span>Aerolink Cargo · Trade Credit · Confidential</span>
-  <span>Powered by Salesforce Web-to-Lead</span>
 </footer>
 
 <script>
@@ -680,8 +754,11 @@
 
   // ─── Step navigation ────────────────────────────
   const step1 = $("#step1"), step2 = $("#step2");
-  const backBtn = $("#backBtn"), nextBtn = $("#nextBtn"), navInfo = $("#navInfo");
+  const backBtn = $("#backBtn"), nextBtn = $("#nextBtn");
+  const navTitle = $("#navTitle"), navSub = $("#navSub");
   const tag1 = $("#tag1"), tag2 = $("#tag2");
+  const dots = $$("#navInfo .dot");
+  const STEP_TITLES = { 1: "Company details", 2: "Account selection" };
   let currentStep = 1;
 
   function goStep(n) {
@@ -694,13 +771,18 @@
       nextBtn.textContent = "Continue";
       tag1.classList.remove("done", "pending"); tag1.classList.add("active");
       tag2.classList.remove("active", "done"); tag2.classList.add("pending");
+      dots[0].classList.add("on"); dots[0].classList.remove("done");
+      dots[1].classList.remove("on", "done");
     } else {
       nextBtn.textContent = "Submit application";
       tag1.classList.remove("active", "pending"); tag1.classList.add("done");
       tag2.classList.remove("pending", "done"); tag2.classList.add("active");
+      dots[0].classList.remove("on"); dots[0].classList.add("done");
+      dots[1].classList.add("on"); dots[1].classList.remove("done");
       if (OFFERINGS.length === 0) loadOfferings();
     }
-    navInfo.textContent = "Step 0" + n + " of 02";
+    navTitle.textContent = STEP_TITLES[n];
+    navSub.textContent = "Step " + n + " of 2";
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
