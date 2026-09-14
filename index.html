@@ -629,31 +629,14 @@
     // Leave empty ("") to fall back to the built-in demo data below.
     ACCOUNTS_API: "https://orgfarm-e22db378c4-dev-ed.develop.my.salesforce-sites.com/tradecredit/services/apexrest/accounts",
 
-    // Web-to-Lead endpoint (do not change unless you have EMEA-specific endpoint).
-    WEB_TO_LEAD: "https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8",
+    // Lead intake endpoint — public Apex REST on the Aerolink Trade Credit site.
+    // No Web-to-Lead: bypasses the 500/day quota + anti-spam heuristic, populates
+    // Lookup fields directly, and returns a proper reference number.
+    LEAD_INTAKE_API: "https://orgfarm-e22db378c4-dev-ed.develop.my.salesforce-sites.com/tradecredit/services/apexrest/leads",
 
     // false = show receipt without POSTing (safe for previews).
     // true  = actually POST to Salesforce → real Lead is created.
     LIVE_SUBMIT: true,
-
-    // 15-char field IDs from the org (Setup → Object Manager → Lead → Fields → click field → copy ID from URL).
-    FIELD_IDS: {
-      trading_name:      "00Nbm00003N4Tck",
-      vat_number:        "00Nbm00003N4Tcl",
-      registered_number: "00Nbm00003N4Tch",
-      generic_email:     "00Nbm00003N4Tcg",
-      est_currency:      "00Nbm00003N4Tcf",
-      est_amount:        "00Nbm00003N4Tce",
-      ba_name:           "00Nbm00003N4Tcd",
-      ba_email:          "00Nbm00003N4Tcc",
-      address_line_2:    "00Nbm00003N4Tcb",
-      selected_ids:      "00Nbm00003N4Tci",
-      selected_names:    "00Nbm00003N4Tcj",
-      // Phase 2: parent-in-hierarchy — the offering the prospect wants to sit under.
-      // First tile ticked on Step 2 becomes this Lookup value. On Lead Convert, it
-      // will be copied into Account.ParentId so the Account Hierarchy LWC picks it up.
-      intended_parent:   "00Nbm00003N7IZK",
-    },
   };
 
   // Fallback demo data if ACCOUNTS_API is blank or unreachable.
@@ -675,11 +658,7 @@
   const $  = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
 
-  // Wire OID + Web-to-Lead URL + retURL
   const form = $("#creditForm");
-  form.action = CONFIG.WEB_TO_LEAD;
-  $("#oidField").value = CONFIG.ORG_ID;
-  $("#retField").value = location.origin + location.pathname + "?success=1";
 
   let OFFERINGS = [];
   let ACTIVE_REGION = "";
@@ -813,81 +792,76 @@
 
   // ─── Submit ────────────────────────────────────
   function submitForm() {
-    // Set field IDs as the `name=` on hidden mirrors, then copy values across.
-    const map = [
-      ["hidTradingName",   "fTradingName",   CONFIG.FIELD_IDS.trading_name],
-      ["hidVAT",           "fVAT",           CONFIG.FIELD_IDS.vat_number],
-      ["hidRegNo",         "fRegNo",         CONFIG.FIELD_IDS.registered_number],
-      ["hidGenericEmail",  "fGenericEmail",  CONFIG.FIELD_IDS.generic_email],
-      ["hidEstCurrency",   "fEstCurrency",   CONFIG.FIELD_IDS.est_currency],
-      ["hidEstAmount",     "fEstAmount",     CONFIG.FIELD_IDS.est_amount],
-      ["hidBAName",        "fBAName",        CONFIG.FIELD_IDS.ba_name],
-      ["hidBAEmail",       "fBAEmail",       CONFIG.FIELD_IDS.ba_email],
-      ["hidAddr2",         "fAddr2",         CONFIG.FIELD_IDS.address_line_2],
-    ];
-    map.forEach(([hidId, srcId, fieldId]) => {
-      const hid = document.getElementById(hidId);
-      const src = document.getElementById(srcId);
-      hid.name = fieldId;
-      hid.value = src ? src.value.trim() : "";
-    });
+    const val = (id) => (document.getElementById(id)?.value || "").trim();
+    const nval = (id) => (val(id) || "").replace(/,/g, "");
 
-    // Web-to-Lead can't ingest Currency-type fields with a symbol; strip commas.
-    document.getElementById("hidEstAmount").value = ($("#fEstAmount").value || "").replace(/,/g, "");
-
-    // Selected accounts → concatenated ids + names
+    // Collect selected offerings
     const checked = $$("#tiles input:checked");
     const ids   = checked.map(c => c.dataset.id).join(",");
     const names = checked.map(c => c.dataset.name + (c.dataset.type ? " (" + c.dataset.type + ")" : "")).join("\n");
 
-    const hidIds   = $("#hidSelectedIds");
-    const hidNames = $("#hidSelectedNames");
-    hidIds.name = CONFIG.FIELD_IDS.selected_ids;
-    hidNames.name = CONFIG.FIELD_IDS.selected_names;
-    hidIds.value = ids;
-    hidNames.value = names;
+    // Build the JSON payload the Apex endpoint expects
+    const payload = {
+      company:              form.company.value.trim(),
+      firstName:            form.first_name.value.trim(),
+      lastName:             form.last_name.value.trim(),
+      email:                form.email.value.trim(),
+      phone:                form.phone.value.trim(),
+      mobile:               (form.mobile?.value || "").trim(),
+      street:               form.street.value.trim(),
+      addressLine2:         val("fAddr2"),
+      city:                 form.city.value.trim(),
+      state:                (form.state?.value || "").trim(),
+      postalCode:           (form.zip?.value || "").trim(),
+      country:              form.country.value,
+      tradingName:          val("fTradingName"),
+      vatNumber:            val("fVAT"),
+      registrationNumber:   val("fRegNo"),
+      genericEmail:         val("fGenericEmail"),
+      monthlyCurrency:      val("fEstCurrency") || "EUR",
+      monthlyAmount:        nval("fEstAmount") ? Number(nval("fEstAmount")) : null,
+      accountManagerName:   val("fBAName"),
+      accountManagerEmail:  val("fBAEmail"),
+      selectedAccountIds:   ids,
+      selectedAccountNames: names,
+    };
 
-    // Note: Web-to-Lead cannot populate Lookup fields, so we don't set a name on
-    // #hidIntendedParent. A record-triggered Flow on Lead insert reads the first
-    // AccountId out of Selected_Account_Ids__c and copies it into the
-    // Intended_Parent_Account__c Lookup — the same result, done server-side.
-
-    // Compose receipt
-    const ref = "L-" + Date.now().toString(36).slice(-6).toUpperCase();
-    $("#rRef").textContent = ref;
-    $("#rEmail").textContent = form.email.value || "your inbox";
-    $("#rCompany").textContent = form.company.value || "—";
+    // Prime the receipt while the request is in flight
+    $("#rEmail").textContent = payload.email || "your inbox";
+    $("#rCompany").textContent = payload.company || "—";
     $("#rTypes").textContent = checked.map(c => c.dataset.name).join(", ") || "—";
     $("#rWhen").textContent = new Date().toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" });
 
-    if (CONFIG.LIVE_SUBMIT) {
-      // POST via fetch() rather than form.submit(): Web-to-Lead silently drops browser
-      // form.submit() posts from unregistered domains (spam filter) but accepts fetch().
-      const params = new URLSearchParams();
-      for (const el of form.elements) {
-        if (!el.name || el.disabled) continue;
-        if (el.type === "checkbox" || el.type === "radio") { if (el.checked) params.append(el.name, el.value); }
-        else { params.append(el.name, el.value ?? ""); }
-      }
-      nextBtn.disabled = true;
-      nextBtn.textContent = "Submitting…";
-      fetch(CONFIG.WEB_TO_LEAD, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString(),
-      }).then(() => {
-        // no-cors returns opaque; treat resolution as success (Salesforce always returns 200)
-        showReceipt();
-      }).catch(() => {
-        nextBtn.disabled = false;
-        nextBtn.textContent = "Submit application";
-        alert("Network error while submitting — please try again.");
-      });
+    if (!CONFIG.LIVE_SUBMIT) {
+      $("#rRef").textContent = "L-PREVIEW";
+      showReceipt();
       return;
     }
 
-    showReceipt();
+    nextBtn.disabled = true;
+    nextBtn.textContent = "Submitting…";
+    // text/plain avoids the CORS preflight — Content-Type is a "simple" header value.
+    fetch(CONFIG.LEAD_INTAKE_API, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8", "Accept": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(async (r) => {
+        const body = await r.json().catch(() => ({}));
+        if (r.ok && body.status === "ok") {
+          $("#rRef").textContent = body.reference || "L-000000";
+          showReceipt();
+        } else {
+          nextBtn.disabled = false;
+          nextBtn.textContent = "Submit application";
+          alert("Application couldn't be submitted:\n\n" + (body.message || ("HTTP " + r.status)));
+        }
+      })
+      .catch((err) => {
+        nextBtn.disabled = false;
+        nextBtn.textContent = "Submit application";
+        alert("Network error while submitting — please try again.\n\n" + err.message);
+      });
   }
 
   function showReceipt() {
@@ -895,15 +869,6 @@
     document.querySelector(".progress").style.display = "none";
     $("#receipt").classList.add("on");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  // ─── ?success=1 landing (after real submit) ────
-  const params = new URLSearchParams(location.search);
-  if (params.get("success") === "1") {
-    form.style.display = "none";
-    document.querySelector(".progress").style.display = "none";
-    $("#rRef").textContent = params.get("ref") || "L-000000";
-    $("#receipt").classList.add("on");
   }
 
   // Start loading offerings early (in case user reaches step 2 fast)
