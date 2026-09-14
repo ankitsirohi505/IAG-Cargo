@@ -851,16 +851,40 @@
     $("#rWhen").textContent = new Date().toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" });
 
     if (CONFIG.LIVE_SUBMIT) {
-      // Include ref in retURL so we can show it after Salesforce redirects
-      $("#retField").value = location.origin + location.pathname + "?success=1&ref=" + encodeURIComponent(ref);
-      form.submit();
+      // POST via fetch() rather than form.submit(): Web-to-Lead silently drops browser
+      // form.submit() posts from unregistered domains (spam filter) but accepts fetch().
+      const params = new URLSearchParams();
+      for (const el of form.elements) {
+        if (!el.name || el.disabled) continue;
+        if (el.type === "checkbox" || el.type === "radio") { if (el.checked) params.append(el.name, el.value); }
+        else { params.append(el.name, el.value ?? ""); }
+      }
+      nextBtn.disabled = true;
+      nextBtn.textContent = "Submitting…";
+      fetch(CONFIG.WEB_TO_LEAD, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params.toString(),
+      }).then(() => {
+        // no-cors returns opaque; treat resolution as success (Salesforce always returns 200)
+        showReceipt();
+      }).catch(() => {
+        nextBtn.disabled = false;
+        nextBtn.textContent = "Submit application";
+        alert("Network error while submitting — please try again.");
+      });
       return;
     }
 
-    // Preview mode — no POST
-    form.style.display = "none";
+    showReceipt();
+  }
+
+  function showReceipt() {
+    $("#creditForm").style.display = "none";
     document.querySelector(".progress").style.display = "none";
     $("#receipt").classList.add("on");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // ─── ?success=1 landing (after real submit) ────
