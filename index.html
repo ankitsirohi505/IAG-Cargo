@@ -555,7 +555,7 @@
       <section id="step2" class="step" aria-labelledby="s2-title">
         <div class="step-head">
           <h1 class="doc-title" id="s2-title">Which trade accounts are you applying for?</h1>
-          <p class="lede">Pulled live from our stewardship register. Select all that apply — additional information may be requested per account after our team reviews your application.</p>
+          <p class="lede">Optional — pick any that apply, or leave blank and our stewardship team will confirm the right account with you.</p>
         </div>
 
         <div class="tiles-toolbar">
@@ -573,7 +573,6 @@
         </div>
 
         <p class="footnote">*Further information may be required after submission.</p>
-        <p class="err-msg" id="tilesErr">Please select at least one account.</p>
       </section>
 
       <footer class="form-nav">
@@ -583,10 +582,9 @@
         <div class="nav-info" id="navInfo">
           <div class="dots"><span class="dot on" data-dot="1"></span><span class="dot" data-dot="2"></span></div>
           <span class="info-title" id="navTitle">Company details</span>
-          <span class="info-sub" id="navSub">Step 1 of 2</span>
         </div>
         <div class="nav-side right">
-          <button type="button" id="nextBtn" class="btn primary">Continue</button>
+          <button type="button" id="nextBtn" class="btn primary">Next</button>
         </div>
       </footer>
     </form>
@@ -733,7 +731,7 @@
   // ─── Step navigation ────────────────────────────
   const step1 = $("#step1"), step2 = $("#step2");
   const backBtn = $("#backBtn"), nextBtn = $("#nextBtn");
-  const navTitle = $("#navTitle"), navSub = $("#navSub");
+  const navTitle = $("#navTitle");
   const tag1 = $("#tag1"), tag2 = $("#tag2");
   const dots = $$("#navInfo .dot");
   const STEP_TITLES = { 1: "Company details", 2: "Account selection" };
@@ -746,7 +744,7 @@
     step2.classList.toggle("on", n === 2);
     backBtn.disabled = n === 1;
     if (n === 1) {
-      nextBtn.textContent = "Continue";
+      nextBtn.textContent = "Next";
       tag1.classList.remove("done", "pending"); tag1.classList.add("active");
       tag2.classList.remove("active", "done"); tag2.classList.add("pending");
       dots[0].classList.add("on"); dots[0].classList.remove("done");
@@ -760,7 +758,6 @@
       if (OFFERINGS.length === 0) loadOfferings();
     }
     navTitle.textContent = STEP_TITLES[n];
-    navSub.textContent = "Step " + n + " of 2";
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -779,17 +776,12 @@
     return ok;
   }
 
-  function validateStep2() {
-    const anyChecked = $$("#tiles input[type='checkbox']").some((c) => c.checked);
-    $("#tilesErr").classList.toggle("on", !anyChecked);
-    return anyChecked;
-  }
-
   nextBtn.addEventListener("click", () => {
     if (currentStep === 1) {
       if (validateStep1()) goStep(2);
     } else {
-      if (validateStep2()) submitForm();
+      // Step 2 is optional — a prospect may submit without ticking any offering.
+      submitForm();
     }
   });
   backBtn.addEventListener("click", () => goStep(1));
