@@ -250,6 +250,18 @@
     animation:spin .8s linear infinite;
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
+  .btn-spinner{
+    display:inline-block; vertical-align:middle;
+    width:14px; height:14px; margin-right:8px; border-radius:50%;
+    border:2px solid rgba(255,255,255,0.4); border-top-color:#fff;
+    animation:spin .7s linear infinite;
+  }
+  .submit-progress{
+    display:block; margin-top:10px; font-size:12.5px;
+    color:var(--muted); text-align:center;
+    animation:fadeUp 220ms ease-out;
+  }
+  .submit-progress.warn{ color:var(--accent); font-weight:500; }
 
   .footnote{ display:block; font-size:12.5px; color:var(--muted); margin-top:22px; font-style:italic; }
   .err-msg{ color:var(--danger); font-size:12.5px; margin-top:4px; display:none; }
@@ -853,29 +865,57 @@
       return;
     }
 
+    const resetBtn = () => {
+      nextBtn.disabled = false;
+      nextBtn.innerHTML = "Submit application";
+      const p = document.getElementById("submitProgress");
+      if (p) p.remove();
+    };
+
     nextBtn.disabled = true;
-    nextBtn.textContent = "Submitting…";
-    // text/plain avoids the CORS preflight — Content-Type is a "simple" header value.
+    nextBtn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>Submitting…';
+
+    const progress = document.createElement("span");
+    progress.id = "submitProgress";
+    progress.className = "submit-progress";
+    progress.textContent = "Sending your application to Aerolink CDM…";
+    nextBtn.parentElement.appendChild(progress);
+    const slowTimer = setTimeout(() => {
+      progress.classList.add("warn");
+      progress.textContent = "Still working — network is a bit slow. Please wait…";
+    }, 4000);
+    const verySlowTimer = setTimeout(() => {
+      progress.textContent = "Almost done — this is taking longer than usual. Hang tight…";
+    }, 12000);
+
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 30000);
+
     fetch(CONFIG.LEAD_INTAKE_API, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=UTF-8", "Accept": "application/json" },
       body: JSON.stringify(payload),
+      signal: ctrl.signal,
+      cache: "no-store",
     })
       .then(async (r) => {
+        clearTimeout(timeoutId); clearTimeout(slowTimer); clearTimeout(verySlowTimer);
         const body = await r.json().catch(() => ({}));
         if (r.ok && body.status === "ok") {
           $("#rRef").textContent = body.reference || "L-000000";
           showReceipt();
         } else {
-          nextBtn.disabled = false;
-          nextBtn.textContent = "Submit application";
+          resetBtn();
           alert("Application couldn't be submitted:\n\n" + (body.message || ("HTTP " + r.status)));
         }
       })
       .catch((err) => {
-        nextBtn.disabled = false;
-        nextBtn.textContent = "Submit application";
-        alert("Network error while submitting — please try again.\n\n" + err.message);
+        clearTimeout(timeoutId); clearTimeout(slowTimer); clearTimeout(verySlowTimer);
+        resetBtn();
+        const msg = err && err.name === "AbortError"
+          ? "The request took longer than 30 seconds. Your application may still have been received — please wait a minute and check your inbox, or try again."
+          : ("Network error while submitting — please try again.\n\n" + (err && err.message ? err.message : "unknown error"));
+        alert(msg);
       });
   }
 
