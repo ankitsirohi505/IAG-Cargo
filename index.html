@@ -191,37 +191,31 @@
   input:invalid:not(:placeholder-shown){ border-color:var(--danger); }
   input::placeholder{ color:color-mix(in oklab, var(--muted) 65%, transparent); }
 
-  /* Step 2 tiles */
+  .step-head-center{ text-align:center; }
+  .step-head-center .section-tag{ margin:0 auto 14px; }
+  .step-head-center .lede{ margin-left:auto; margin-right:auto; }
+
   .tiles-toolbar{
     display:flex; align-items:center; justify-content:space-between; gap:20px;
     margin:8px 0 20px; flex-wrap:wrap;
   }
-  .tiles-toolbar .filter-group{
-    display:flex; gap:8px; flex-wrap:wrap;
-  }
-  .filter-chip{
-    padding:6px 12px; border:1px solid var(--line-strong); border-radius:999px;
-    background:transparent; color:var(--muted); font:500 12px/1 var(--font-body);
-    cursor:pointer; transition:all 160ms ease;
-  }
-  .filter-chip:hover{ border-color:var(--ink-soft); color:var(--ink); }
-  .filter-chip.on{
-    background:var(--accent); border-color:var(--accent); color:#fff;
-  }
-  :root[data-theme="dark"] .filter-chip.on{ color:var(--ground); }
-  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .filter-chip.on{ color:var(--ground); } }
+  .tiles-toolbar-right{ justify-content:flex-end; }
   .tiles-actions{ display:flex; gap:20px; font-size:13px; }
-  .tiles-actions button{
-    background:none; border:0; color:var(--accent); cursor:pointer; font:inherit; padding:0;
-    text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px;
+  .link-btn{
+    background:none; border:0; color:var(--ink-soft); cursor:pointer;
+    font:500 13px/1 var(--font-body); padding:0;
+    display:inline-flex; align-items:center; gap:6px;
   }
-  .tiles-actions button:hover{ color:var(--accent-hover); }
+  .link-btn:hover{ color:var(--ink); }
+  .link-btn-icon{ color:var(--accent); font-weight:700; }
 
   .tiles{
     display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px;
     min-height:200px; position:relative;
   }
+  .type-tiles{ grid-template-columns:1fr 1fr; }
   @media (max-width:560px){ .tiles{ grid-template-columns:1fr; } }
+  .footnote.right{ text-align:right; }
 
   .tile{
     display:grid; grid-template-columns:22px 1fr auto; align-items:start; gap:12px;
@@ -411,7 +405,7 @@
     <div class="step-circle"><span class="step-num">2</span></div>
     <div class="step-info">
       <span class="step-tag-label">Step 2</span>
-      <span class="step-tag-title">Account selection</span>
+      <span class="step-tag-title">Account Types</span>
     </div>
   </div>
 </div>
@@ -588,34 +582,22 @@
 
       <!-- ================ STEP 2 ================ -->
       <section id="step2" class="step" aria-labelledby="s2-title">
-        <div class="step-head">
-          <h1 class="doc-title" id="s2-title">Which trade accounts are you applying for?</h1>
-          <p class="lede">Optional — pick any that apply, or leave blank and our stewardship team will confirm the right account with you.</p>
-          <div class="type-legend" aria-label="Trade account types available in CDM">
-            <span class="type-legend-label">Account types</span>
-            <span class="type-chip">Direct Trade</span>
-            <span class="type-chip">Cargo GSA</span>
-            <span class="type-chip">IATA CASS Agent</span>
-            <span class="type-chip">Corporate Account</span>
-            <span class="type-chip">Interline Partner</span>
-          </div>
+        <div class="step-head step-head-center">
+          <p class="section-tag">New customer credit application</p>
+          <h1 class="doc-title" id="s2-title">Account types</h1>
+          <p class="lede">Please select which account or accounts you are applying for.<span class="req">*</span></p>
         </div>
 
-        <div class="tiles-toolbar">
-          <div class="filter-group" id="filterGroup" role="tablist" aria-label="Filter by region">
-            <button type="button" class="filter-chip on" data-region="">All regions</button>
-          </div>
+        <div class="tiles-toolbar tiles-toolbar-right">
           <div class="tiles-actions">
-            <button type="button" id="selectAll">Select all</button>
-            <button type="button" id="clearAll">Clear</button>
+            <button type="button" id="selectAll" class="link-btn"><span class="link-btn-icon">✓</span>Select all</button>
+            <button type="button" id="clearAll" class="link-btn"><span class="link-btn-icon">×</span>Clear choices</button>
           </div>
         </div>
 
-        <div class="tiles" id="tiles">
-          <div class="loading-state"><div class="spinner"></div>Loading account offerings…</div>
-        </div>
+        <div class="tiles type-tiles" id="tiles"></div>
 
-        <p class="footnote">*Further information may be required after submission.</p>
+        <p class="footnote right">*Further information may be required after submission.</p>
       </section>
 
       <footer class="form-nav">
@@ -680,19 +662,17 @@
     LIVE_SUBMIT: true,
   };
 
-  // Fallback demo data if ACCOUNTS_API is blank or unreachable.
-  const DEMO_OFFERINGS = [
-    { id:"demo1",  name:"Export CASS – Europe Hub",         type:"Export CASS",         code:"Z103",      region:"Europe",   tagline:"CASS-settled export volume through EU hub network" },
-    { id:"demo2",  name:"Export CASS – Americas",           type:"Export CASS",         code:"Z103",      region:"N AMERICA",tagline:"CASS-settled export through North & South America" },
-    { id:"demo3",  name:"Export non-CASS – Global",         type:"Export non-CASS",     code:"Z103",      region:"Europe",   tagline:"Non-CASS export for non-IATA agents worldwide" },
-    { id:"demo4",  name:"Courier CASS – Global",            type:"Courier CASS",        code:"Z103",      region:"Europe",   tagline:"IATA CASS for time-critical courier operators" },
-    { id:"demo5",  name:"Courier non-CASS – Global",        type:"Courier non-CASS",    code:"Z103",      region:"Europe",   tagline:"Non-CASS courier for non-IATA integrators" },
-    { id:"demo6",  name:"UK Import CASS – Heathrow",        type:"UK Import CASS",      code:"Z102",      region:"Europe",   tagline:"UK inbound cargo settled via CASS at LHR" },
-    { id:"demo7",  name:"UK Import non-CASS – Regional",    type:"UK Import non-CASS",  code:"Z103",      region:"Europe",   tagline:"UK inbound cargo direct-billed at MAN/EDI/BHX" },
-    { id:"demo8",  name:"Import non-CASS – EU",             type:"Import non-CASS",     code:"Z103",      region:"Europe",   tagline:"Direct-billed inbound into Continental Europe" },
-    { id:"demo9",  name:"Cargo GHA – Menzies UK",           type:"Cargo GHA",           code:"Z103-0107", region:"Europe",   tagline:"Ground handling agent services at UK stations" },
-    { id:"demo10", name:"Cargo GSA – Air Logistics Group",  type:"Cargo GSA",           code:"Z103-0107", region:"Europe",   tagline:"General sales agency reach across secondary markets" },
-    { id:"demo11", name:"Mail non-IATA – Global Postal",    type:"Mail non-IATA",       code:"",          region:"APACME",   tagline:"Postal and mail operators outside IATA" },
+  const TRADE_ACCOUNT_TYPES = [
+    { id:"export-cass",         name:"Export CASS",                       code:"Z103" },
+    { id:"export-noncass",      name:"Export non-CASS",                   code:"Z103" },
+    { id:"courier-cass",        name:"Courier CASS",                      code:"Z103" },
+    { id:"courier-noncass",     name:"Courier non-CASS",                  code:"Z103" },
+    { id:"import-noncass",      name:"Import non-CASS",                   code:"Z103" },
+    { id:"uk-import-cass",      name:"UK Import CASS",                    code:"Z102" },
+    { id:"uk-import-noncass",   name:"UK Import non-CASS",                code:"Z103" },
+    { id:"cargo-gha",           name:"Cargo ground handling (GHA)",       code:"Z103-0107" },
+    { id:"cargo-gsa",           name:"Cargo general sales agent (GSA)",   code:"Z103-0107" },
+    { id:"mail-non-iata",       name:"Mail non-IATA",                     code:"" },
   ];
 
   // ═══════════════════════════════════════════════════════════════
@@ -701,68 +681,18 @@
 
   const form = $("#creditForm");
 
-  let OFFERINGS = [];
-  let ACTIVE_REGION = "";
-  // Order in which tiles were ticked. First entry is used as Intended_Parent_Account__c
-  // on the Lead — so users can express "put me under THIS one" by clicking it first.
-  const CLICK_ORDER = [];
-  document.addEventListener("change", (e) => {
-    const cb = e.target;
-    if (!cb.matches?.("#tiles input[type='checkbox']")) return;
-    const id = cb.dataset.id;
-    const idx = CLICK_ORDER.indexOf(id);
-    if (cb.checked && idx === -1) CLICK_ORDER.push(id);
-    else if (!cb.checked && idx !== -1) CLICK_ORDER.splice(idx, 1);
-  });
-
-  async function loadOfferings() {
-    const tilesEl = $("#tiles");
-    if (!CONFIG.ACCOUNTS_API) {
-      OFFERINGS = DEMO_OFFERINGS;
-      renderTiles();
-      return;
-    }
-    try {
-      const r = await fetch(CONFIG.ACCOUNTS_API, { headers: { "Accept": "application/json" } });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      OFFERINGS = await r.json();
-      if (!Array.isArray(OFFERINGS) || OFFERINGS.length === 0) throw new Error("empty");
-      renderTiles();
-    } catch (err) {
-      console.warn("Falling back to demo data:", err);
-      OFFERINGS = DEMO_OFFERINGS;
-      renderTiles();
-    }
-  }
-
   function renderTiles() {
     const tilesEl = $("#tiles");
     tilesEl.innerHTML = "";
-
-    // Rebuild region chips
-    const regions = Array.from(new Set(OFFERINGS.map(o => o.region).filter(Boolean))).sort();
-    const filterGroup = $("#filterGroup");
-    filterGroup.innerHTML = `<button type="button" class="filter-chip ${ACTIVE_REGION === "" ? "on" : ""}" data-region="">All regions</button>` +
-      regions.map(r => `<button type="button" class="filter-chip ${ACTIVE_REGION === r ? "on" : ""}" data-region="${r}">${r}</button>`).join("");
-    filterGroup.querySelectorAll(".filter-chip").forEach(btn => {
-      btn.addEventListener("click", () => { ACTIVE_REGION = btn.dataset.region; renderTiles(); });
-    });
-
-    const filtered = OFFERINGS.filter(o => !ACTIVE_REGION || o.region === ACTIVE_REGION);
-    if (filtered.length === 0) {
-      tilesEl.innerHTML = `<div class="empty-state">No accounts available for this region.</div>`;
-      return;
-    }
-    filtered.forEach(o => {
+    TRADE_ACCOUNT_TYPES.forEach(o => {
       const label = document.createElement("label");
       label.className = "tile";
+      const codeLabel = o.code ? `${o.name} (${o.code})` : o.name;
       label.innerHTML = `
-        <input type="checkbox" data-id="${o.id}" data-name="${escapeAttr(o.name)}" data-type="${escapeAttr(o.type || "")}">
+        <input type="checkbox" data-id="${o.id}" data-name="${escapeAttr(o.name)}" data-type="${escapeAttr(o.name)}">
         <div class="tile-body">
-          <span class="tile-name">${escapeHTML(o.name)}</span>
-          ${o.tagline ? `<span class="tile-tagline">${escapeHTML(o.tagline)}</span>` : ""}
+          <span class="tile-name">${escapeHTML(codeLabel)}</span>
         </div>
-        ${o.code ? `<span class="tile-code">${escapeHTML(o.code)}</span>` : `<span class="tile-code" style="visibility:hidden;">·</span>`}
       `;
       tilesEl.appendChild(label);
     });
@@ -777,7 +707,7 @@
   const navTitle = $("#navTitle");
   const tag1 = $("#tag1"), tag2 = $("#tag2");
   const dots = $$("#navInfo .dot");
-  const STEP_TITLES = { 1: "Company details", 2: "Account selection" };
+  const STEP_TITLES = { 1: "Company details", 2: "Account Types" };
   let currentStep = 1;
 
   function goStep(n) {
@@ -798,7 +728,6 @@
       tag2.classList.remove("pending", "done"); tag2.classList.add("active");
       dots[0].classList.remove("on"); dots[0].classList.add("done");
       dots[1].classList.add("on"); dots[1].classList.remove("done");
-      if (OFFERINGS.length === 0) loadOfferings();
     }
     navTitle.textContent = STEP_TITLES[n];
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -841,22 +770,9 @@
     const val = (id) => (document.getElementById(id)?.value || "").trim();
     const nval = (id) => (val(id) || "").replace(/,/g, "");
 
-    // Collect selected offerings — ordered by CLICK order, not DOM order, so the
-    // first tile the user picked becomes Intended_Parent_Account__c.
-    const checkedById = new Map();
-    $$("#tiles input:checked").forEach(c => checkedById.set(c.dataset.id, c));
-    // Everything still-checked, in click order (skip any removed since click)
-    const orderedChecked = CLICK_ORDER
-      .filter(id => checkedById.has(id))
-      .map(id => checkedById.get(id));
-    // Any tile that got ticked but wasn't tracked (e.g. via Select all) — append at end
-    checkedById.forEach((c, id) => {
-      if (!CLICK_ORDER.includes(id)) orderedChecked.push(c);
-    });
-
-    const checked = orderedChecked;
+    const checked = $$("#tiles input:checked");
     const ids   = checked.map(c => c.dataset.id).join(",");
-    const names = checked.map(c => c.dataset.name + (c.dataset.type ? " (" + c.dataset.type + ")" : "")).join("\n");
+    const names = checked.map(c => c.dataset.name).join("\n");
 
     // Build the JSON payload the Apex endpoint expects
     const payload = {
@@ -904,7 +820,7 @@
     nextBtn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>Submitting…';
 
     const ctrl = new AbortController();
-    const timeoutId = setTimeout(() => ctrl.abort(), 30000);
+    const timeoutId = setTimeout(() => ctrl.abort(), 60000);
 
     fetch(CONFIG.LEAD_INTAKE_API, {
       method: "POST",
@@ -928,7 +844,7 @@
         clearTimeout(timeoutId);
         resetBtn();
         const msg = err && err.name === "AbortError"
-          ? "The request took longer than 30 seconds. Your application may still have been received — please wait a minute and check your inbox, or try again."
+          ? "The request took longer than a minute. Your application may still have been received — please wait a moment and try again, or contact our stewardship team."
           : ("Network error while submitting — please try again.\n\n" + (err && err.message ? err.message : "unknown error"));
         alert(msg);
       });
@@ -941,8 +857,43 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Start loading offerings early (in case user reaches step 2 fast)
-  loadOfferings();
+  renderTiles();
+
+  fetch(CONFIG.LEAD_INTAKE_API, { method: "GET", cache: "no-store" }).catch(() => {});
+
+  const SAMPLE_STEP1 = {
+    company:         "Bremen Express Cargo GmbH",
+    fTradingName:    "Bremen Express",
+    fVAT:            "DE812345679",
+    fRegNo:          "HRB 45812 Bremen",
+    street:          "Flughafenallee 26",
+    fAddr2:          "Terminal C, Level 3",
+    city:            "Bremen",
+    state:           "Bremen",
+    zip:             "28199",
+    country:         "Germany",
+    first_name:      "Isabella",
+    last_name:       "Rodriguez",
+    phone:           "+49 421 5595 200",
+    mobile:          "+49 170 4412 998",
+    email:           "isabella.rodriguez@bremenexpress.example",
+    fGenericEmail:   "ops@bremenexpress.example",
+    fEstCurrency:    "EUR",
+    fEstAmount:      "250,000",
+    fBAName:         "Marcus Weiland",
+    fBAEmail:        "marcus.weiland@iagcargo.example",
+  };
+  Object.entries(SAMPLE_STEP1).forEach(([id, value]) => {
+    let el = document.getElementById(id);
+    if (!el) el = form.elements[id];
+    if (!el) return;
+    if (el.tagName === "SELECT") {
+      const match = Array.from(el.options).find(o => o.value === value || o.textContent.trim() === value);
+      el.value = match ? match.value : el.value;
+    } else {
+      el.value = value;
+    }
+  });
 </script>
 </body>
 </html>
