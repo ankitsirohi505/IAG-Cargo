@@ -40,16 +40,10 @@
     border-bottom:1px solid var(--line);
     display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
   }
-  .brand{ display:flex; align-items:center; gap:10px; color:var(--ink); }
-  .brand-mark{
-    width:26px; height:26px; display:grid; place-items:center;
-    background:var(--accent); color:#fff; border-radius:4px;
-    font:500 12px/1 var(--font-mono); letter-spacing:.05em;
-  }
-  :root[data-theme="dark"] .brand-mark{ color:var(--ground); }
-  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .brand-mark{ color:var(--ground); } }
-  .brand-name{ font:600 14px/1 var(--font-body); letter-spacing:.02em; }
-  .brand-name em{ font-style:normal; color:var(--muted); font-weight:400; }
+  .brand{ display:flex; align-items:center; gap:12px; color:var(--ink); }
+  .brand-mark{ height:26px; display:flex; align-items:center; }
+  .brand-mark svg{ height:26px; width:auto; display:block; }
+  .brand-name{ font:500 13px/1.2 var(--font-body); color:var(--muted); letter-spacing:.02em; padding-left:12px; border-left:1px solid var(--line-strong); }
   .doc-ref{ font:500 11px/1 var(--font-mono); letter-spacing:.14em; color:var(--muted); text-transform:uppercase; }
 
   /* progress row */
@@ -134,11 +128,12 @@
     color:var(--ink); margin:0 0 10px; text-wrap:balance;
   }
   .lede{ color:var(--muted); max-width:58ch; margin:0; }
-  .section-tag{
-    display:inline-block; margin:18px 0 0; padding:6px 12px;
+  .step-head .section-tag{
+    display:block; margin:20px auto 0; padding:6px 14px;
     font:500 12px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase;
     color:var(--accent); background:rgba(198,138,55,.08);
     border:1px solid rgba(198,138,55,.28); border-radius:999px;
+    width:fit-content; text-align:center;
   }
   .type-legend{
     display:flex; flex-wrap:wrap; align-items:center; gap:8px;
@@ -393,8 +388,13 @@
 
 <header class="masthead">
   <div class="brand">
-    <div class="brand-mark" aria-hidden="true">AK</div>
-    <div class="brand-name">IAG Cargo <em>— New Customer Onboarding</em></div>
+    <div class="brand-mark" aria-label="IAG Cargo">
+      <svg viewBox="0 0 172 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+        <text x="0" y="32" font-family="Inter, system-ui, sans-serif" font-weight="900" font-size="34" letter-spacing="-1.2" fill="#0F1620">IAG</text>
+        <text x="65" y="32" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="34" letter-spacing="-0.6" fill="#56B7A5">Cargo</text>
+      </svg>
+    </div>
+    <div class="brand-name">New Customer Onboarding</div>
   </div>
 </header>
 
@@ -568,7 +568,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>Aerolink account manager <span style="text-transform:none; letter-spacing:0; color:var(--muted); font-size:12px;">(if known)</span></legend>
+          <legend>Account manager <span style="text-transform:none; letter-spacing:0; color:var(--muted); font-size:12px;">(if known)</span></legend>
           <div class="field-grid">
             <label class="field">
               <span>Account manager name</span>
@@ -646,7 +646,7 @@
       <ol class="next-steps">
         <li>Credit &amp; compliance review by the stewardship team.</li>
         <li>IATA CASS code cross-check where applicable.</li>
-        <li>Account activation email once approved, with your Aerolink customer number.</li>
+        <li>Account activation email once approved, with your IAG Cargo customer number.</li>
       </ol>
     </section>
 
@@ -654,7 +654,7 @@
 </main>
 
 <footer class="footprint">
-  <span>Aerolink &rarr; IAG Cargo &middot; Confidential</span>
+  <span>IAG Cargo &middot; Confidential</span>
 </footer>
 
 <script>
@@ -670,7 +670,7 @@
     // Leave empty ("") to fall back to the built-in demo data below.
     ACCOUNTS_API: "https://orgfarm-e22db378c4-dev-ed.develop.my.salesforce-sites.com/tradecredit/services/apexrest/accounts",
 
-    // Lead intake endpoint — public Apex REST on the Aerolink Trade Credit site.
+    // Lead intake endpoint — public Apex REST on the IAG Cargo intake site.
     // No Web-to-Lead: bypasses the 500/day quota + anti-spam heuristic, populates
     // Lookup fields directly, and returns a proper reference number.
     LEAD_INTAKE_API: "https://orgfarm-e22db378c4-dev-ed.develop.my.salesforce-sites.com/tradecredit/services/apexrest/leads",
