@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cargo Credit Application</title>
-<meta name="description" content="New customer trade credit application — Aerolink Cargo.">
+<meta name="description" content="New customer credit application — IAG Cargo.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ctext y='19' font-size='18'%3E%E2%9C%88%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -134,6 +134,12 @@
     color:var(--ink); margin:0 0 10px; text-wrap:balance;
   }
   .lede{ color:var(--muted); max-width:58ch; margin:0; }
+  .section-tag{
+    display:inline-block; margin:18px 0 0; padding:6px 12px;
+    font:500 12px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); background:rgba(198,138,55,.08);
+    border:1px solid rgba(198,138,55,.28); border-radius:999px;
+  }
 
   .step{ display:none; animation:fadeUp 260ms ease both; }
   .step.on{ display:block; }
@@ -372,7 +378,7 @@
 <header class="masthead">
   <div class="brand">
     <div class="brand-mark" aria-hidden="true">AK</div>
-    <div class="brand-name">Aerolink Cargo <em>— Trade Credit</em></div>
+    <div class="brand-name">IAG Cargo <em>— New Customer Onboarding</em></div>
   </div>
 </header>
 
@@ -421,8 +427,9 @@
       <!-- ================ STEP 1 ================ -->
       <section id="step1" class="step on" aria-labelledby="s1-title">
         <div class="step-head">
-          <h1 class="doc-title" id="s1-title">A few details about your company</h1>
-          <p class="lede">This becomes your Aerolink Cargo trade credit account of record. Our stewardship team will validate against IATA and internal registries before activation.</p>
+          <h1 class="doc-title" id="s1-title">Your journey with IAG Cargo begins here</h1>
+          <p class="lede">Register your company below to access a global cargo network powered by five airlines, market-leading services, and expertise trusted to move what matters most.</p>
+          <p class="section-tag">New customer credit application</p>
         </div>
 
         <fieldset>
@@ -623,7 +630,7 @@
 </main>
 
 <footer class="footprint">
-  <span>Aerolink Cargo · Trade Credit · Confidential</span>
+  <span>Aerolink &rarr; IAG Cargo &middot; Confidential</span>
 </footer>
 
 <script>
