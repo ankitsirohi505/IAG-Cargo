@@ -140,6 +140,22 @@
     color:var(--accent); background:rgba(198,138,55,.08);
     border:1px solid rgba(198,138,55,.28); border-radius:999px;
   }
+  .type-legend{
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+    margin:20px 0 0; padding:14px 16px;
+    background:rgba(15,22,32,.03); border:1px solid var(--line);
+    border-radius:10px;
+  }
+  .type-legend-label{
+    font:600 10px/1 var(--font-mono); letter-spacing:.18em; text-transform:uppercase;
+    color:var(--muted); margin-right:4px;
+  }
+  .type-chip{
+    display:inline-block; padding:5px 10px;
+    font:500 12px/1 var(--font-body); letter-spacing:.01em;
+    color:var(--ink-soft); background:var(--paper);
+    border:1px solid var(--line-strong); border-radius:999px;
+  }
 
   .step{ display:none; animation:fadeUp 260ms ease both; }
   .step.on{ display:block; }
@@ -575,6 +591,14 @@
         <div class="step-head">
           <h1 class="doc-title" id="s2-title">Which trade accounts are you applying for?</h1>
           <p class="lede">Optional — pick any that apply, or leave blank and our stewardship team will confirm the right account with you.</p>
+          <div class="type-legend" aria-label="Trade account types available in CDM">
+            <span class="type-legend-label">Account types</span>
+            <span class="type-chip">Direct Trade</span>
+            <span class="type-chip">Cargo GSA</span>
+            <span class="type-chip">IATA CASS Agent</span>
+            <span class="type-chip">Corporate Account</span>
+            <span class="type-chip">Interline Partner</span>
+          </div>
         </div>
 
         <div class="tiles-toolbar">
@@ -875,25 +899,10 @@
     const resetBtn = () => {
       nextBtn.disabled = false;
       nextBtn.innerHTML = "Submit application";
-      const p = document.getElementById("submitProgress");
-      if (p) p.remove();
     };
 
     nextBtn.disabled = true;
     nextBtn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>Submitting…';
-
-    const progress = document.createElement("span");
-    progress.id = "submitProgress";
-    progress.className = "submit-progress";
-    progress.textContent = "Sending your application to Aerolink CDM…";
-    nextBtn.parentElement.appendChild(progress);
-    const slowTimer = setTimeout(() => {
-      progress.classList.add("warn");
-      progress.textContent = "Still working — network is a bit slow. Please wait…";
-    }, 4000);
-    const verySlowTimer = setTimeout(() => {
-      progress.textContent = "Almost done — this is taking longer than usual. Hang tight…";
-    }, 12000);
 
     const ctrl = new AbortController();
     const timeoutId = setTimeout(() => ctrl.abort(), 30000);
@@ -906,7 +915,7 @@
       cache: "no-store",
     })
       .then(async (r) => {
-        clearTimeout(timeoutId); clearTimeout(slowTimer); clearTimeout(verySlowTimer);
+        clearTimeout(timeoutId);
         const body = await r.json().catch(() => ({}));
         if (r.ok && body.status === "ok") {
           $("#rRef").textContent = body.reference || "L-000000";
@@ -917,7 +926,7 @@
         }
       })
       .catch((err) => {
-        clearTimeout(timeoutId); clearTimeout(slowTimer); clearTimeout(verySlowTimer);
+        clearTimeout(timeoutId);
         resetBtn();
         const msg = err && err.name === "AbortError"
           ? "The request took longer than 30 seconds. Your application may still have been received — please wait a minute and check your inbox, or try again."
