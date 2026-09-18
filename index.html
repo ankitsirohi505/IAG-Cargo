@@ -635,7 +635,7 @@
     <section id="receipt" class="receipt" aria-live="polite">
       <span class="stamp">Application received</span>
       <h2>We have your application.</h2>
-      <p class="lede">A confirmation has been sent to <strong id="rEmail">your inbox</strong>. Our stewardship team reviews new applications within two business days.</p>
+      <p class="lede">Our Credit Risk Team will review your application and contact you for any further information required.</p>
       <dl>
         <dt>Reference</dt><dd class="ref" id="rRef">L-000000</dd>
         <dt>Company</dt><dd id="rCompany">—</dd>
@@ -885,7 +885,6 @@
     };
 
     // Prime the receipt while the request is in flight
-    $("#rEmail").textContent = payload.email || "your inbox";
     $("#rCompany").textContent = payload.company || "—";
     $("#rTypes").textContent = checked.map(c => c.dataset.name).join(", ") || "—";
     $("#rWhen").textContent = new Date().toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" });
